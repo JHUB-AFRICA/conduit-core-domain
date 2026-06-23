@@ -30,3 +30,44 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+
+# Environment variables
+.env
+
+# Static and media files
+staticfiles/
+static/
+media/
+
+# Django cache
+*.cache
+
+# Migrations (optional)
+# Uncomment if you don't want to track migrations
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
