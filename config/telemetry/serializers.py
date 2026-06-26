@@ -68,3 +68,10 @@ class WeatherStationSerializer(serializers.ModelSerializer):
     class Meta:
         model = WeatherStation
         fields = "__all__"
+
+
+
+
+
+
+

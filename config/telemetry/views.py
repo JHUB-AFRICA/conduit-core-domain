@@ -6,6 +6,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Avg, Max, Min
 from django.db.models.functions import TruncDate
+from rest_framework.permissions import IsAuthenticated
+from accounts.authentication import APIKeyAuthentication
 
 from .models import WeatherMeasurement, WeatherStation
 from .serializers import (
@@ -13,7 +15,7 @@ from .serializers import (
     CurrentWeatherSerializer,
     WeatherTrendSerializer,
     WeatherHistorySerializer,
-    DailyWeatherSerializer
+    DailyWeatherSerializer,
 )
 
 from .permissions import IsReadOnlyOrAdmin
@@ -25,11 +27,15 @@ class WeatherStationViewSet(viewsets.ModelViewSet):
     queryset = WeatherStation.objects.all()
     serializer_class = WeatherStationSerializer
     lookup_field = "id"
-    permission_classes = [IsReadOnlyOrAdmin]
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated, IsReadOnlyOrAdmin]
 
 
 
 class CurrentWeatherView(APIView):
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         latest = WeatherMeasurement.objects.order_by("-time").first()
 
@@ -42,6 +48,10 @@ class CurrentWeatherView(APIView):
 
 
 class MinutelyWeatherView(APIView):
+
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         now = timezone.now()
         past_hour = now - timedelta(hours=1)
@@ -55,6 +65,10 @@ class MinutelyWeatherView(APIView):
 
 
 class HourlyWeatherView(APIView):
+
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         now = timezone.now()
         past_24h = now - timedelta(hours=24)
@@ -69,6 +83,10 @@ class HourlyWeatherView(APIView):
 
 
 class DailyWeatherView(APIView):
+
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         qs = WeatherMeasurement.objects.annotate(
             day=TruncDate("time")
@@ -84,6 +102,10 @@ class DailyWeatherView(APIView):
 
 
 class HistoricalWeatherView(APIView):
+
+    authentication_classes = [APIKeyAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         start = request.query_params.get("start")
         end = request.query_params.get("end")

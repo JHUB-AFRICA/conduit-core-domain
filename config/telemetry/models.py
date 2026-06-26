@@ -42,6 +42,7 @@ class WeatherStation(models.Model):
 
 
 class WeatherMeasurement(models.Model):
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
     station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE, related_name="measurements")
 
     time = models.DateTimeField()
@@ -95,7 +96,7 @@ class WeatherAlert(models.Model):
         WARNING = "warning", "Warning"
         DANGER = "danger", "Danger"
         EXTREME = "extreme", "Extreme"
-
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
     station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE)
     measurement = models.ForeignKey("WeatherMeasurement", on_delete=models.CASCADE)
 
