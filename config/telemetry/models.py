@@ -12,18 +12,14 @@ class WeatherStation(models.Model):
         DECOMMISSIONED = "decommissioned", "Decommissioned"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     instrument_name = models.CharField(max_length=255, default="Kenya Kiambu JKUAT IOT AWS - Conduit@Empathy1")
     sensor_id = models.IntegerField(unique=True, default=61)
     site_name = models.CharField(max_length=255, default="Site JKUAT")
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=-1.099736)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=37.014528)
     elevation_m = models.DecimalField(max_digits=7, decimal_places=2, default=1523.0)
-
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
-
     slug = models.SlugField(unique=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -44,9 +40,7 @@ class WeatherStation(models.Model):
 class WeatherMeasurement(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
     station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE, related_name="measurements")
-
     time = models.DateTimeField()
-
     health = models.IntegerField()
     battery_voltage = models.FloatField(null=True, blank=True)
     battery_charge_status = models.IntegerField(null=True, blank=True)
@@ -87,9 +81,6 @@ class WeatherMeasurement(models.Model):
 
 
 class WeatherAlert(models.Model):
-    """
-    Stores computed risk alerts generated from biometeorological indices.
-    """
 
     class Severity(models.TextChoices):
         INFO = "info", "Info"
@@ -97,8 +88,8 @@ class WeatherAlert(models.Model):
         DANGER = "danger", "Danger"
         EXTREME = "extreme", "Extreme"
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
-    station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE)
-    measurement = models.ForeignKey("WeatherMeasurement", on_delete=models.CASCADE)
+    station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE, related_name="alerts")
+    measurement = models.ForeignKey("WeatherMeasurement", on_delete=models.CASCADE, related_name="alerts")
 
     time = models.DateTimeField()
 
@@ -111,6 +102,14 @@ class WeatherAlert(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-time"]
+        indexes = [
+            models.Index(fields=["station", "-time"]),
+        ]
+
+    def __str__(self):
+        return f"{self.station.site_name} [{self.severity}] @ {self.time}"
 
 
 
