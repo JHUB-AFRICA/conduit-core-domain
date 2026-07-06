@@ -12,14 +12,18 @@ class WeatherStation(models.Model):
         DECOMMISSIONED = "decommissioned", "Decommissioned"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     instrument_name = models.CharField(max_length=255, default="Kenya Kiambu JKUAT IOT AWS - Conduit@Empathy1")
     sensor_id = models.IntegerField(unique=True, default=61)
     site_name = models.CharField(max_length=255, default="Site JKUAT")
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=-1.099736)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=37.014528)
     elevation_m = models.DecimalField(max_digits=7, decimal_places=2, default=1523.0)
+
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+
     slug = models.SlugField(unique=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,11 +44,14 @@ class WeatherStation(models.Model):
 class WeatherMeasurement(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
     station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE, related_name="measurements")
+
     time = models.DateTimeField()
-    health = models.IntegerField()
+    is_test = models.BooleanField(default=False)  # 3D-FEWSNET's "test": "true"/"false"
+
+    health = models.IntegerField(null=True, blank=True)
     battery_voltage = models.FloatField(null=True, blank=True)
     battery_charge_status = models.IntegerField(null=True, blank=True)
-    cell_signal_strength = models.IntegerField(null=True, blank=True)
+    cell_signal_strength = models.FloatField(null=True, blank=True)
 
     rain_gauge_1 = models.FloatField(null=True, blank=True)
     rain_gauge_2 = models.FloatField(null=True, blank=True)
@@ -74,42 +81,17 @@ class WeatherMeasurement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.station.instrument_name} @ {self.time}"
-
-
-
-
-class WeatherAlert(models.Model):
-
-    class Severity(models.TextChoices):
-        INFO = "info", "Info"
-        WARNING = "warning", "Warning"
-        DANGER = "danger", "Danger"
-        EXTREME = "extreme", "Extreme"
-    id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False,)  
-    station = models.ForeignKey("WeatherStation", on_delete=models.CASCADE, related_name="alerts")
-    measurement = models.ForeignKey("WeatherMeasurement", on_delete=models.CASCADE, related_name="alerts")
-
-    time = models.DateTimeField()
-
-    severity = models.CharField(max_length=20, choices=Severity.choices)
-
-    message = models.TextField()
-
-    wbgt = models.FloatField(null=True, blank=True)
-    heat_index = models.FloatField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["station", "time"], name="unique_station_time")
+        ]
         ordering = ["-time"]
         indexes = [
-            models.Index(fields=["station", "-time"]),
+            models.Index(fields=["station", "time"]),
         ]
 
     def __str__(self):
-        return f"{self.station.site_name} [{self.severity}] @ {self.time}"
+        return f"{self.station.instrument_name} @ {self.time}"
 
 
 

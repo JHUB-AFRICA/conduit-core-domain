@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 from corsheaders.defaults import default_headers
+from dotenv import load_dotenv
+import os
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-api-key",
@@ -20,6 +22,16 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+# 3D-FEWSNET ingestion source — see ingestion/services/client.py
+FEWSNET_API_BASE_URL = os.environ.get(
+    "FEWSNET_API_BASE_URL", "https://3d-fewsnet.icdp.ucar.edu/api/v1/data"
+)
+FEWSNET_EMAIL = os.environ.get("FEWSNET_EMAIL")
+FEWSNET_API_KEY = os.environ.get("FEWSNET_API_KEY")
+FEWSNET_SENSOR_ID = os.environ.get("FEWSNET_SENSOR_ID", "61")
 
 
 # Quick-start development settings - unsuitable for production
@@ -48,7 +60,6 @@ INSTALLED_APPS = [
     'telemetry',
     "accounts",
     "ingestion",
-  
 
 ]
 
