@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import WeatherAlert, WeatherMeasurement, WeatherStation
+from .models import WeatherMeasurement, WeatherStation
+
+
 
 class StationListSerializer(serializers.ModelSerializer):
 
@@ -16,6 +18,7 @@ class StationListSerializer(serializers.ModelSerializer):
             "status",
             "slug",
         ]
+
 
 
 class StationDetailSerializer(serializers.ModelSerializer):
@@ -41,6 +44,8 @@ class StationDetailSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+
 
 
 class SystemHealthSerializer(serializers.Serializer):
@@ -90,29 +95,16 @@ class WeatherReadingsSerializer(serializers.Serializer):
     indices = IndicesGroupSerializer(source="*")
 
 
-class StationListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = WeatherStation
-        fields = [
-            "id",
-            "site_name",
-            "latitude",
-            "longitude",
-            "elevation_m",
-            "status",
-        ]
-
-
 class MeasurementDataSerializer(serializers.ModelSerializer):
 
     time = serializers.DateTimeField()
-    station = StationListSerializer(read_only=True)
+    system_health = SystemHealthSerializer(source="*")
     weather_readings = WeatherReadingsSerializer(source="*")
 
     class Meta:
         model = WeatherMeasurement
-        fields = ["id", "time", "station", "weather_readings"]
+        fields = ["id", "time", "system_health", "weather_readings"]
+
 
 
 class CoordinatesSerializer(serializers.Serializer):
@@ -174,28 +166,3 @@ class DailySummaryResponseSerializer(serializers.Serializer):
     station_slug = serializers.CharField()
     aggregated_by = serializers.CharField(default="day")
     history = DailySummaryPointSerializer(many=True)
-
-
-class WeatherAlertSerializer(serializers.ModelSerializer):
-    station_slug = serializers.SlugField(source="station.slug", read_only=True)
-    station_name = serializers.CharField(source="station.site_name", read_only=True)
-    severity_label = serializers.SerializerMethodField()
-
-    class Meta:
-        model = WeatherAlert
-        fields = [
-            "id",
-            "station_slug",
-            "station_name",
-            "time",
-            "severity",
-            "severity_label",
-            "message",
-            "wbgt",
-            "heat_index",
-        ]
-
-    def get_severity_label(self, obj):
-        from .severity import SEVERITY_LABEL
-
-        return SEVERITY_LABEL.get(obj.severity, obj.severity)

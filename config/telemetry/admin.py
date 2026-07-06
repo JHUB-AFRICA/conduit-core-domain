@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import WeatherStation,WeatherMeasurement, WeatherAlert
+from .models import WeatherStation, WeatherMeasurement
 
 admin.site.register(WeatherMeasurement)
 admin.site.register(WeatherStation)
-admin.site.register(WeatherAlert)

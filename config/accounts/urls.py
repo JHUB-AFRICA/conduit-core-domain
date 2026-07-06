@@ -3,9 +3,10 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
-    SignupView,
-    LoginView,
     MeView,
+    LoginView,
+    SignupView,
+    APIUsageView,
     APIKeyListView,
     APIKeyCreateView,
     APIKeyDeleteView,
@@ -22,4 +23,5 @@ urlpatterns = [
     path("api-keys/", APIKeyListView.as_view(), name="api-key-list"),
     path("api-keys/create/", APIKeyCreateView.as_view(), name="api-key-create"),
     path("api-keys/<int:pk>/", APIKeyDeleteView.as_view(), name="api-key-delete"),
+    path("api-usage/", APIUsageView.as_view(), name="api-usage"),
 ]
