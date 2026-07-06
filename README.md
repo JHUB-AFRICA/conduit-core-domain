@@ -27,7 +27,7 @@ Core backend service for ingesting, processing, and serving telemetry and weathe
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/conduit-core-domain.git
+git https://github.com/JHUB-AFRICA/conduit-core-domain.git
 cd conduit-core-domain
 python -m venv venv
 source venv/bin/activate  # on Windows: venv\Scripts\activate
