@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'telemetry',
     "accounts",
     "ingestion",
+    "alerts",
 
 ]
 

@@ -47,6 +47,8 @@ class StationDetailView(RetrieveAPIView):
     lookup_url_kwarg = "slug"
 
 
+from django.db.models import Prefetch, Q
+
 class GlobalCurrentWeatherView(ListAPIView):
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -54,26 +56,47 @@ class GlobalCurrentWeatherView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        stations = list(
-            WeatherStation.objects.filter(status=WeatherStation.Status.ACTIVE)
+        # Get all active stations
+        stations = WeatherStation.objects.filter(
+            status=WeatherStation.Status.ACTIVE
         )
-
-        station_ids = [station.id for station in stations]
-        latest_by_station = {}
-
-        measurements = (
-            WeatherMeasurement.objects.filter(station_id__in=station_ids)
-            .order_by("station_id", "-time")
-        )
-
-        for measurement in measurements:
-            if measurement.station_id not in latest_by_station:
-                latest_by_station[measurement.station_id] = measurement
-
+        
+        # For each station, get the latest measurement
         for station in stations:
-            station.latest_measurement = latest_by_station.get(station.id)
-
+            try:
+                station.latest_measurement = station.measurements.latest('time')
+            except WeatherMeasurement.DoesNotExist:
+                station.latest_measurement = None
+        
         return stations
+
+# class GlobalCurrentWeatherView(ListAPIView):
+#     authentication_classes = [APIKeyAuthentication]
+#     permission_classes = [permissions.IsAuthenticated]
+#     serializer_class = GlobalCurrentWeatherSerializer
+#     pagination_class = None
+
+#     def get_queryset(self):
+#         stations = list(
+#             WeatherStation.objects.filter(status=WeatherStation.Status.ACTIVE)
+#         )
+
+#         station_ids = [station.id for station in stations]
+#         latest_by_station = {}
+
+#         measurements = (
+#             WeatherMeasurement.objects.filter(station_id__in=station_ids)
+#             .order_by("station_id", "-time")
+#         )
+
+#         for measurement in measurements:
+#             if measurement.station_id not in latest_by_station:
+#                 latest_by_station[measurement.station_id] = measurement
+
+#         for station in stations:
+#             station.latest_measurement = latest_by_station.get(station.id)
+
+#         return stations
 
 
 class StationCurrentWeatherView(APIView):
