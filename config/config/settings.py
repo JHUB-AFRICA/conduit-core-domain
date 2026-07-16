@@ -37,13 +37,16 @@ FEWSNET_SENSOR_ID = os.environ.get("FEWSNET_SENSOR_ID", "61")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=zvw3=&8^c+wu1**bboj6uc@@j(xui8ymqe4k44qcdla850d^1'
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",
+    "https://conduit-core-domain.onrender.com/",
+]
 
 
 # Application definition
