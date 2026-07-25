@@ -1,16 +1,15 @@
+from datetime import timedelta
+from django.db.models import Q
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
-
 from rest_framework import permissions
-from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from accounts.authentication import APIKeyAuthentication
-
-from .aggregation import build_daily_summary, build_timeline, resolution_window
+from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+from django.utils.dateparse import parse_datetime
 from .models import WeatherMeasurement, WeatherStation
+from accounts.authentication import APIKeyAuthentication
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from .aggregation import build_daily_summary, build_timeline, resolution_window
 from .pagination import HistoryPagination
 from .serializers import (
     DailySummaryResponseSerializer,
@@ -22,14 +21,18 @@ from .serializers import (
 )
 
 
+# Helper Functions
 def get_station_or_404(slug):
+    """Get station by slug or raise 404."""
     try:
         return WeatherStation.objects.get(slug=slug)
     except WeatherStation.DoesNotExist:
         raise NotFound("Weather station not found.")
 
 
+# Station Views
 class StationListView(ListAPIView):
+    """List all weather stations."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = StationListSerializer
@@ -38,30 +41,29 @@ class StationListView(ListAPIView):
 
 
 class StationDetailView(RetrieveAPIView):
+    """Retrieve a single weather station."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = StationDetailSerializer
     queryset = WeatherStation.objects.all()
-
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
 
 
-from django.db.models import Prefetch, Q
-
+# Current Weather Views
 class GlobalCurrentWeatherView(ListAPIView):
+    """Get current weather for all active stations."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = GlobalCurrentWeatherSerializer
     pagination_class = None
 
     def get_queryset(self):
-        # Get all active stations
         stations = WeatherStation.objects.filter(
             status=WeatherStation.Status.ACTIVE
         )
         
-        # For each station, get the latest measurement
+        # Annotate each station with its latest measurement
         for station in stations:
             try:
                 station.latest_measurement = station.measurements.latest('time')
@@ -70,36 +72,9 @@ class GlobalCurrentWeatherView(ListAPIView):
         
         return stations
 
-# class GlobalCurrentWeatherView(ListAPIView):
-#     authentication_classes = [APIKeyAuthentication]
-#     permission_classes = [permissions.IsAuthenticated]
-#     serializer_class = GlobalCurrentWeatherSerializer
-#     pagination_class = None
-
-#     def get_queryset(self):
-#         stations = list(
-#             WeatherStation.objects.filter(status=WeatherStation.Status.ACTIVE)
-#         )
-
-#         station_ids = [station.id for station in stations]
-#         latest_by_station = {}
-
-#         measurements = (
-#             WeatherMeasurement.objects.filter(station_id__in=station_ids)
-#             .order_by("station_id", "-time")
-#         )
-
-#         for measurement in measurements:
-#             if measurement.station_id not in latest_by_station:
-#                 latest_by_station[measurement.station_id] = measurement
-
-#         for station in stations:
-#             station.latest_measurement = latest_by_station.get(station.id)
-
-#         return stations
-
 
 class StationCurrentWeatherView(APIView):
+    """Get current weather for a specific station."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
@@ -121,7 +96,9 @@ class StationCurrentWeatherView(APIView):
         return Response(MeasurementDataSerializer(latest).data)
 
 
+# Timeline Views
 class StationTimelineView(APIView):
+    """Get aggregated timeline data for a station."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
@@ -160,21 +137,38 @@ class StationTimelineView(APIView):
         start_param = request.query_params.get("start")
         end_param = request.query_params.get("end")
 
-        if bool(start_param) != bool(end_param):
-            return Response(
-                {"detail": "Both 'start' and 'end' must be supplied together."},
-                status=400,
+        # If start/end not provided, use default window (last 24 hours)
+        if not start_param and not end_param:
+            end = latest.time
+            start = end - timedelta(days=1)
+        else:
+            if bool(start_param) != bool(end_param):
+                return Response(
+                    {"detail": "Both 'start' and 'end' must be supplied together."},
+                    status=400,
+                )
+
+            start = parse_datetime(start_param)
+            end = parse_datetime(end_param)
+
+            if start is None or end is None:
+                return Response(
+                    {"detail": "Invalid date format. Use ISO 8601 format."},
+                    status=400,
+                )
+
+            if start > end:
+                return Response(
+                    {"detail": "Start date must be before end date."},
+                    status=400,
+                )
+
+            start, end = resolution_window(
+                resolution=resolution,
+                latest_time=latest.time,
+                start=start,
+                end=end,
             )
-
-        start = parse_datetime(start_param) if start_param else None
-        end = parse_datetime(end_param) if end_param else None
-
-        start, end = resolution_window(
-            resolution=resolution,
-            latest_time=latest.time,
-            start=start,
-            end=end,
-        )
 
         measurements = (
             WeatherMeasurement.objects.filter(
@@ -196,7 +190,9 @@ class StationTimelineView(APIView):
         return Response(TimelineResponseSerializer(payload).data)
 
 
+# Daily Summary Views
 class StationDailySummaryView(APIView):
+    """Get daily summary data for a station."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
@@ -205,8 +201,34 @@ class StationDailySummaryView(APIView):
     def get(self, request, slug):
         station = get_station_or_404(slug)
 
-        end = timezone.now()
-        start = end - timezone.timedelta(days=self.DEFAULT_LOOKBACK_DAYS)
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
+
+        # If start/end not provided, use default (last 30 days)
+        if not start_param and not end_param:
+            end = timezone.now()
+            start = end - timezone.timedelta(days=self.DEFAULT_LOOKBACK_DAYS)
+        else:
+            if bool(start_param) != bool(end_param):
+                return Response(
+                    {"detail": "Both 'start' and 'end' must be supplied together."},
+                    status=400,
+                )
+
+            start = parse_datetime(start_param)
+            end = parse_datetime(end_param)
+
+            if start is None or end is None:
+                return Response(
+                    {"detail": "Invalid date format. Use ISO 8601 format."},
+                    status=400,
+                )
+
+            if start > end:
+                return Response(
+                    {"detail": "Start date must be before end date."},
+                    status=400,
+                )
 
         measurements = (
             WeatherMeasurement.objects.filter(
@@ -222,13 +244,17 @@ class StationDailySummaryView(APIView):
         payload = {
             "station_slug": station.slug,
             "aggregated_by": "day",
+            "start_date": start.date(),
+            "end_date": end.date(),
             "history": history,
         }
 
         return Response(DailySummaryResponseSerializer(payload).data)
 
 
+# History Archive Views
 class StationHistoryArchiveView(ListAPIView):
+    """Get paginated historical measurements for a station."""
     authentication_classes = [APIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MeasurementDataSerializer

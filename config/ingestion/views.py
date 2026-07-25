@@ -1,13 +1,18 @@
+import logging
+import secrets as secrets_module
 from datetime import date, timedelta
 
+from django.conf import settings
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import WeatherSyncLog
 from .serializers import WeatherSyncLogSerializer
-from .services.ingest import run_ingest, IngestError
+from .services.ingest import run_ingest, run_latest_sync, IngestError
 from telemetry.models import WeatherMeasurement
+
+logger = logging.getLogger(__name__)
 
 
 class WeatherIngestView(APIView):
@@ -43,6 +48,43 @@ class WeatherIngestView(APIView):
             return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class InternalSyncView(APIView):
+    """
+    POST /api/internal/sync/
+
+    Called every 15 minutes by GitHub Actions (or EasyCron) — not by a
+    logged-in user, so it's authenticated by a shared-secret header
+    instead of JWT/API keys:
+
+        X-SYNC-TOKEN: <SYNC_SECRET_TOKEN>
+
+    Finds the latest measurement already in Postgres and fetches only
+    what's newer than that from 3D-FEWSNET (see run_latest_sync()).
+    """
+
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        if not settings.SYNC_SECRET_TOKEN:
+            logger.error("SYNC_SECRET_TOKEN is not configured — refusing internal sync request.")
+            return Response(
+                {"error": "Internal sync is not configured on this server."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        provided_token = request.headers.get("X-SYNC-TOKEN", "")
+        if not secrets_module.compare_digest(provided_token, settings.SYNC_SECRET_TOKEN):
+            return Response({"error": "Invalid or missing X-SYNC-TOKEN."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            result = run_latest_sync(triggered_by="github-actions")
+        except IngestError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response(result, status=status.HTTP_200_OK)
 

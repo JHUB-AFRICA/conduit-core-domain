@@ -3,6 +3,10 @@
 *.env
 .env.*
 
+env/
+
+staticfiles/
+
 # Python
 __pycache__/
 *.py[cod]

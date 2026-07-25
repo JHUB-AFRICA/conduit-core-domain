@@ -2,9 +2,11 @@ from rest_framework import serializers
 from .models import WeatherMeasurement, WeatherStation
 
 
+# ============================================================================
+# Station Serializers
+# ============================================================================
 
 class StationListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = WeatherStation
         fields = [
@@ -18,7 +20,6 @@ class StationListSerializer(serializers.ModelSerializer):
             "status",
             "slug",
         ]
-
 
 
 class StationDetailSerializer(serializers.ModelSerializer):
@@ -46,7 +47,9 @@ class StationDetailSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-
+# ============================================================================
+# Current Weather Serializers
+# ============================================================================
 
 class SystemHealthSerializer(serializers.Serializer):
     health_score = serializers.IntegerField(source="health")
@@ -68,8 +71,12 @@ class LightGroupSerializer(serializers.Serializer):
 
 
 class RainGroupSerializer(serializers.Serializer):
+    gauge_1_current = serializers.FloatField(source="rain_gauge_1", allow_null=True)
+    gauge_2_current = serializers.FloatField(source="rain_gauge_2", allow_null=True)
     gauge_1_today = serializers.FloatField(source="rain_gauge_1_total_today", allow_null=True)
     gauge_2_today = serializers.FloatField(source="rain_gauge_2_total_today", allow_null=True)
+    gauge_1_prior = serializers.FloatField(source="rain_gauge_1_total_prior", allow_null=True)
+    gauge_2_prior = serializers.FloatField(source="rain_gauge_2_total_prior", allow_null=True)
 
 
 class WindGroupSerializer(serializers.Serializer):
@@ -96,15 +103,12 @@ class WeatherReadingsSerializer(serializers.Serializer):
 
 
 class MeasurementDataSerializer(serializers.ModelSerializer):
-
     time = serializers.DateTimeField()
-    system_health = SystemHealthSerializer(source="*")
     weather_readings = WeatherReadingsSerializer(source="*")
 
     class Meta:
         model = WeatherMeasurement
-        fields = ["id", "time", "system_health", "weather_readings"]
-
+        fields = ["id", "time", "weather_readings"]
 
 
 class CoordinatesSerializer(serializers.Serializer):
@@ -113,8 +117,6 @@ class CoordinatesSerializer(serializers.Serializer):
 
 
 class GlobalCurrentWeatherSerializer(serializers.Serializer):
-
-
     station_name = serializers.CharField(source="site_name")
     station_slug = serializers.SlugField(source="slug")
     coordinates = serializers.SerializerMethodField()
@@ -132,14 +134,44 @@ class GlobalCurrentWeatherSerializer(serializers.Serializer):
         return MeasurementDataSerializer(obj.latest_measurement).data
 
 
+# ============================================================================
+# Timeline Serializers
+# ============================================================================
+
+class RainTimelineSerializer(serializers.Serializer):
+    total_mm = serializers.FloatField(allow_null=True)
+    today_mm = serializers.FloatField(allow_null=True)
+    yesterday_mm = serializers.FloatField(allow_null=True)
+
+
+class WindTimelineSerializer(serializers.Serializer):
+    speed_mps = serializers.FloatField(allow_null=True)
+    direction_deg = serializers.FloatField(allow_null=True)
+    gust_max_mps = serializers.FloatField(allow_null=True)
+    gust_direction_deg = serializers.FloatField(allow_null=True)
+
+
+class LightTimelineSerializer(serializers.Serializer):
+    visible_lux = serializers.FloatField(allow_null=True)
+    infrared = serializers.FloatField(allow_null=True)
+    ultraviolet = serializers.FloatField(allow_null=True)
+
+
+class IndicesTimelineSerializer(serializers.Serializer):
+    heat_index_c = serializers.FloatField(allow_null=True)
+    wet_bulb_c = serializers.FloatField(allow_null=True)
+    wbgt_c = serializers.FloatField(allow_null=True)
+
 
 class TimelinePointSerializer(serializers.Serializer):
-
     timestamp = serializers.DateTimeField()
     temperature_avg_c = serializers.FloatField(allow_null=True)
     humidity_avg_pct = serializers.FloatField(allow_null=True)
-    wind_gust_max_mps = serializers.FloatField(allow_null=True)
-    rain_total_mm = serializers.FloatField(allow_null=True)
+    pressure_hpa = serializers.FloatField(allow_null=True)
+    rain = RainTimelineSerializer()
+    wind = WindTimelineSerializer()
+    light = LightTimelineSerializer()
+    indices = IndicesTimelineSerializer()
 
 
 class TimelineResponseSerializer(serializers.Serializer):
@@ -148,6 +180,9 @@ class TimelineResponseSerializer(serializers.Serializer):
     data_points = TimelinePointSerializer(many=True)
 
 
+# ============================================================================
+# Daily Summary Serializers
+# ============================================================================
 
 class TemperatureSummarySerializer(serializers.Serializer):
     max = serializers.FloatField(allow_null=True)
@@ -155,14 +190,52 @@ class TemperatureSummarySerializer(serializers.Serializer):
     avg = serializers.FloatField(allow_null=True)
 
 
+class HumiditySummarySerializer(serializers.Serializer):
+    avg_pct = serializers.FloatField(allow_null=True)
+
+
+class PressureSummarySerializer(serializers.Serializer):
+    hpa = serializers.FloatField(allow_null=True)
+
+
+class RainSummarySerializer(serializers.Serializer):
+    total_mm = serializers.FloatField(allow_null=True)
+    today_mm = serializers.FloatField(allow_null=True)
+    yesterday_mm = serializers.FloatField(allow_null=True)
+
+
+class WindSummarySerializer(serializers.Serializer):
+    speed_mps = serializers.FloatField(allow_null=True)
+    direction_deg = serializers.FloatField(allow_null=True)
+    gust_max_mps = serializers.FloatField(allow_null=True)
+
+
+class LightSummarySerializer(serializers.Serializer):
+    visible_lux = serializers.FloatField(allow_null=True)
+    infrared = serializers.FloatField(allow_null=True)
+    ultraviolet = serializers.FloatField(allow_null=True)
+
+
+class IndicesSummarySerializer(serializers.Serializer):
+    heat_index_c = serializers.FloatField(allow_null=True)
+    wet_bulb_c = serializers.FloatField(allow_null=True)
+    wbgt_c = serializers.FloatField(allow_null=True)
+
+
 class DailySummaryPointSerializer(serializers.Serializer):
     date = serializers.DateField()
     temperature = TemperatureSummarySerializer()
-    humidity_avg = serializers.FloatField(allow_null=True)
-    total_rain_mm = serializers.FloatField(allow_null=True)
+    humidity = HumiditySummarySerializer()
+    pressure = PressureSummarySerializer()
+    rain = RainSummarySerializer()
+    wind = WindSummarySerializer()
+    light = LightSummarySerializer()
+    indices = IndicesSummarySerializer()
 
 
 class DailySummaryResponseSerializer(serializers.Serializer):
     station_slug = serializers.CharField()
     aggregated_by = serializers.CharField(default="day")
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
     history = DailySummaryPointSerializer(many=True)
