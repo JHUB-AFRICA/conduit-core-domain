@@ -14,7 +14,7 @@ from datetime import timezone as dt_timezone
 
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
-from django.utils.timezone import is_naive, make_aware
+from django.utils.timezone import is_naive, make_aware, now
 
 from telemetry.models import WeatherStation, WeatherMeasurement
 from ingestion.models import WeatherSyncLog
@@ -311,7 +311,7 @@ def run_ingest(start_date, end_date=None, triggered_by="", live_sync=False):
         WeatherSyncLog.objects.create(
             station=station,
             requested_start=start_date,
-            requested_end=end_date,
+            requested_end=now() if live_sync else end_date,
             status=WeatherSyncLog.SyncStatus.FAILED,
             records_fetched=total_fetched,
             records_created=total_created,
@@ -325,7 +325,7 @@ def run_ingest(start_date, end_date=None, triggered_by="", live_sync=False):
     log = WeatherSyncLog.objects.create(
         station=station,
         requested_start=start_date,
-        requested_end=end_date,
+        requested_end=now() if live_sync else end_date,
         status=log_status,
         records_fetched=total_fetched,
         records_created=total_created,
