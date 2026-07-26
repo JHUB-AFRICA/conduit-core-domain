@@ -14,6 +14,8 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key")
 
+SYNC_SECRET_TOKEN = os.getenv("SYNC_SECRET_TOKEN")
+
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv(
