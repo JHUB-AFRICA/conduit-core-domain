@@ -14,8 +14,6 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key")
 
-SYNC_SECRET_TOKEN = os.getenv("SYNC_SECRET_TOKEN")
-
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv(
@@ -28,10 +26,34 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
+SYNC_SECRET_TOKEN = os.getenv("SYNC_SECRET_TOKEN")
+
+ALERTS_LIVESTOCK_WBGT_THRESHOLD = float(
+    os.getenv("ALERTS_LIVESTOCK_WBGT_THRESHOLD", 22.0)
+)
+
+ALERTS_HYDROLOGY_LOOKBACK_HOURS = int(
+    os.getenv("ALERTS_HYDROLOGY_LOOKBACK_HOURS", 6)
+)
+
+ALERTS_HYDROLOGY_ALERT_THRESHOLD = float(
+    os.getenv("ALERTS_HYDROLOGY_ALERT_THRESHOLD", 50)
+)
+
+WEBHOOK_DELIVERY_TIMEOUT_SECONDS = int(
+    os.getenv("WEBHOOK_DELIVERY_TIMEOUT_SECONDS", 5)
+)
+
+WEBHOOK_MAX_DELIVERY_ATTEMPTS = int(
+    os.getenv("WEBHOOK_MAX_DELIVERY_ATTEMPTS", 5)
+)
+
+
 FEWSNET_API_BASE_URL = os.getenv(
     "FEWSNET_API_BASE_URL",
     "https://3d-fewsnet.icdp.ucar.edu/api/v1/data",
 )
+
 FEWSNET_EMAIL = os.getenv("FEWSNET_EMAIL")
 FEWSNET_API_KEY = os.getenv("FEWSNET_API_KEY")
 FEWSNET_SENSOR_ID = os.getenv("FEWSNET_SENSOR_ID", "61")
@@ -46,8 +68,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
-    "telemetry",
     "accounts",
+    "telemetry",
     "ingestion",
     "alerts",
 ]
@@ -99,8 +121,6 @@ SIMPLE_JWT = {
 }
 
 
-# Database
-
 DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv("DATABASE_URL"),
@@ -108,13 +128,6 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -134,15 +147,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 LANGUAGE_CODE = "en-us"
+
 TIME_ZONE = "UTC"
 
 USE_I18N = True
+
 USE_TZ = True
 
 
 STATIC_URL = "static/"
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = []
 
 STORAGES = {
     "staticfiles": {
@@ -153,8 +168,6 @@ STORAGES = {
 
 AUTH_USER_MODEL = "accounts.User"
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-api-key",
@@ -163,6 +176,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 CORS_ALLOW_ALL_ORIGINS = True
 
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 if not DEBUG:
@@ -179,6 +193,3 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 3600
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-
-SYNC_SECRET_TOKEN = os.getenv("SYNC_SECRET_TOKEN")
