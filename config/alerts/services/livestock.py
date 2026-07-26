@@ -8,6 +8,7 @@ taken as-is from the measurement.
 from collections import defaultdict
 
 from django.conf import settings
+from django.db.models import Q
 
 from alerts.models import Alert
 from alerts.services.coalescence import create_alert, get_active_alert, resolve_active_alert
@@ -70,18 +71,85 @@ def evaluate_livestock_thermal(measurements, threshold=None):
     stress. Measurements may span multiple stations; each station's alert
     state is tracked independently.
 
+    Args:
+        measurements: Can be either:
+            - A list of WeatherMeasurement objects
+            - A list of UUIDs (measurement IDs)
+            - A queryset of WeatherMeasurement objects
+    
     Returns the list of newly created Alert objects (crossings that were
     coalesced into an already-active alert don't appear here).
     """
+    from telemetry.models import WeatherMeasurement
+    import uuid
+    
     threshold = threshold if threshold is not None else settings.ALERTS_LIVESTOCK_WBGT_THRESHOLD
-
+    
+    # Handle different input types
+    if not measurements:
+        return []
+    
+    # Check if measurements is a list of UUIDs or IDs
+    if measurements and isinstance(measurements[0], (uuid.UUID, str)):
+        # Convert IDs to actual measurement objects
+        measurement_ids = [str(m) for m in measurements]
+        measurements = WeatherMeasurement.objects.filter(
+            id__in=measurement_ids
+        ).select_related('station')
+    
+    # If measurements is a queryset, ensure it's evaluated
+    if hasattr(measurements, 'select_related'):
+        measurements = measurements.select_related('station')
+    
+    # Group by station
     by_station = defaultdict(list)
     for measurement in measurements:
-        by_station[measurement.station_id].append(measurement)
-
+        # Handle both dict and object
+        if hasattr(measurement, 'station_id'):
+            # It's a model instance
+            station_id = measurement.station_id
+        elif isinstance(measurement, dict):
+            # It's a dict from values()
+            station_id = measurement.get('station_id')
+        else:
+            # Skip unknown types
+            continue
+        
+        if station_id:
+            by_station[station_id].append(measurement)
+    
     created_alerts = []
-    for station_measurements in by_station.values():
-        station = station_measurements[0].station
-        created_alerts.extend(_evaluate_station_measurements(station, station_measurements, threshold))
-
+    for station_id, station_measurements in by_station.items():
+        # Get the station from the first measurement
+        if station_measurements:
+            # Handle both model instances and dicts
+            if hasattr(station_measurements[0], 'station'):
+                station = station_measurements[0].station
+            elif isinstance(station_measurements[0], dict):
+                # Try to get station from station_id
+                try:
+                    from telemetry.models import Station
+                    station = Station.objects.get(id=station_id)
+                    # Convert dict measurements to objects if needed
+                    # This might require additional querying
+                    measurement_ids = [m['id'] for m in station_measurements if 'id' in m]
+                    if measurement_ids:
+                        station_measurements = list(WeatherMeasurement.objects.filter(
+                            id__in=measurement_ids
+                        ).order_by('time'))
+                except Station.DoesNotExist:
+                    continue
+            else:
+                continue
+            
+            # Ensure measurements are ordered by time
+            station_measurements = sorted(
+                station_measurements, 
+                key=lambda m: m.time if hasattr(m, 'time') else 0
+            )
+            
+            created_alerts.extend(_evaluate_station_measurements(
+                station, station_measurements, threshold
+            ))
+    
     return created_alerts
