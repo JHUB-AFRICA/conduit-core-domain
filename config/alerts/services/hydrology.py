@@ -5,7 +5,7 @@ learning — just thresholds and weighted points, intentionally easy to
 reason about and tune.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db.models import Sum
@@ -87,7 +87,20 @@ def evaluate_station_hydrology(station, reference_time=None):
     Returns a summary dict; `alert` is the Alert that was created/left
     active, or None if risk is below the configured threshold.
     """
-    reference_time = reference_time or timezone.now()
+    # Ensure reference_time is a datetime object, not a tuple
+    if reference_time is None:
+        reference_time = timezone.now()
+    elif isinstance(reference_time, tuple):
+        # If it's a tuple, extract the first element as the datetime
+        reference_time = reference_time[0] if reference_time else timezone.now()
+    
+    # Safety check: if it's still not a datetime, use current time
+    if not isinstance(reference_time, datetime):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"reference_time is not a datetime: {type(reference_time)}, using current time")
+        reference_time = timezone.now()
+    
     window_start = reference_time - timedelta(hours=settings.ALERTS_HYDROLOGY_LOOKBACK_HOURS)
 
     measurements = list(
