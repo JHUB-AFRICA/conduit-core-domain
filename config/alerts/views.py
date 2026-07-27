@@ -7,7 +7,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.authentication import APIKeyAuthentication
+from accounts.authentication import JWTOrAPIKeyAuthentication
 from telemetry.pagination import HistoryPagination
 
 from .models import Alert, WebhookDelivery, WebhookSubscription
@@ -24,7 +24,7 @@ class AlertListView(ListAPIView):
     alerts are part of the same consumer-facing API surface.
     """
 
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AlertSerializer
     pagination_class = HistoryPagination
@@ -50,7 +50,7 @@ class AlertListView(ListAPIView):
 class AlertDetailView(RetrieveAPIView):
     """GET /api/v1/alerts/<uuid:pk>/"""
 
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AlertSerializer
     queryset = Alert.objects.select_related("station").all()

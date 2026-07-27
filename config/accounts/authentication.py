@@ -1,5 +1,6 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone
 from datetime import timedelta
 
@@ -51,3 +52,35 @@ class APIKeyAuthentication(BaseAuthentication):
         )
 
         return (api_key.user, api_key)
+
+
+class JWTOrAPIKeyAuthentication(BaseAuthentication):
+    """
+    For endpoints that are hit both by the logged-in website (Data Portal,
+    Alerts page, etc.) and by external API consumers with their own key.
+
+    A valid JWT — the session the browser already holds from /auth/login/ —
+    authenticates for free and never touches APIRequestLog, because from the
+    product's point of view that's just someone using the website, not an
+    "API call". A request has to be authenticating with X-API-KEY alone
+    (no usable session) to be treated as external API usage and metered
+    against that key's rate limit / daily quota, exactly as before.
+
+    If a JWT is present but invalid/expired, we don't hard-fail here — we
+    fall back to the API key, if any, so a stale browser session doesn't
+    break a request that would otherwise succeed on the key.
+    """
+
+    def authenticate(self, request):
+        try:
+            result = JWTAuthentication().authenticate(request)
+        except AuthenticationFailed:
+            result = None
+
+        if result is not None:
+            return result
+
+        return APIKeyAuthentication().authenticate(request)
+
+    def authenticate_header(self, request):
+        return "Bearer"

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.utils.dateparse import parse_datetime
 from .models import WeatherMeasurement, WeatherStation
-from accounts.authentication import APIKeyAuthentication
+from accounts.authentication import JWTOrAPIKeyAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from .aggregation import build_daily_summary, build_timeline, resolution_window
 from .pagination import HistoryPagination
@@ -33,7 +33,7 @@ def get_station_or_404(slug):
 # Station Views
 class StationListView(ListAPIView):
     """List all weather stations."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = StationListSerializer
     queryset = WeatherStation.objects.all().order_by("instrument_name")
@@ -42,7 +42,7 @@ class StationListView(ListAPIView):
 
 class StationDetailView(RetrieveAPIView):
     """Retrieve a single weather station."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = StationDetailSerializer
     queryset = WeatherStation.objects.all()
@@ -53,7 +53,7 @@ class StationDetailView(RetrieveAPIView):
 # Current Weather Views
 class GlobalCurrentWeatherView(ListAPIView):
     """Get current weather for all active stations."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = GlobalCurrentWeatherSerializer
     pagination_class = None
@@ -75,7 +75,7 @@ class GlobalCurrentWeatherView(ListAPIView):
 
 class StationCurrentWeatherView(APIView):
     """Get current weather for a specific station."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, slug):
@@ -99,7 +99,7 @@ class StationCurrentWeatherView(APIView):
 # Timeline Views
 class StationTimelineView(APIView):
     """Get aggregated timeline data for a station."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     VALID_RESOLUTIONS = {"minutely", "hourly", "daily"}
@@ -193,7 +193,7 @@ class StationTimelineView(APIView):
 # Daily Summary Views
 class StationDailySummaryView(APIView):
     """Get daily summary data for a station."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     DEFAULT_LOOKBACK_DAYS = 30
@@ -255,7 +255,7 @@ class StationDailySummaryView(APIView):
 # History Archive Views
 class StationHistoryArchiveView(ListAPIView):
     """Get paginated historical measurements for a station."""
-    authentication_classes = [APIKeyAuthentication]
+    authentication_classes = [JWTOrAPIKeyAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MeasurementDataSerializer
     pagination_class = HistoryPagination
