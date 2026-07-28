@@ -40,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "username",
             "date_joined",
+            "is_staff",
         )
 
 
