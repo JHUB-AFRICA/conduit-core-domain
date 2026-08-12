@@ -1,6 +1,32 @@
 # Conduit Core Domain
 
+![Python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/django-6.0-0C4B33?logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-REST%20Framework-A30000)
+![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-informational)
+
 Conduit Core Domain is a Django REST Framework backend for ingesting, processing, and serving telemetry and weather data from the **3D-FEWSNET** platform.
+
+## 📚 Documentation
+
+This README covers the basics — for the full picture (architecture,
+data model, every API endpoint, the ingestion pipeline, the alerts
+engine, webhooks, and deployment) see the **[full documentation](./docs/README.md)**:
+
+| | |
+|---|---|
+| 🧭 [Overview](./docs/01-overview.md) | What Conduit is, who it's for, the stack |
+| 🏗️ [Architecture](./docs/02-architecture.md) | How the apps fit together, with diagrams |
+| 🗃️ [Data Model](./docs/03-data-model.md) | Every model, field, and relationship |
+| 🔐 [Auth & Authorization](./docs/04-authentication-and-authorization.md) | JWT, API keys, rate limits, internal endpoints |
+| 🔌 API Reference | [Accounts](./docs/05-api-accounts.md) · [Telemetry](./docs/06-api-telemetry.md) · [Ingestion](./docs/07-api-ingestion.md) · [Alerts](./docs/08-api-alerts.md) · [Blog](./docs/09-api-blog.md) |
+| 🔄 [Ingestion Pipeline](./docs/10-ingestion-pipeline.md) | How raw readings become stored measurements |
+| 🚨 [Alerts Engine](./docs/11-alerts-engine.md) | Hydrology & livestock scoring rules |
+| 📡 [Webhooks](./docs/12-webhooks.md) | Delivery, signing, retries |
+| ⚙️ [Configuration](./docs/13-configuration.md) | Every environment variable |
+| 🚀 [Deployment](./docs/14-deployment.md) | Docker, cron, running locally |
+| 📖 [Glossary](./docs/15-glossary.md) | Terms and domain vocabulary |
 
 ## Features
 
