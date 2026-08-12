@@ -9,32 +9,29 @@ it contains no code that runs — it's a collection of Markdown documents that
 together describe what Conduit Core Domain is, how it's built, how data
 flows through it, and how every part of its API works.
 
-> Diagrams in these docs are written in [Mermaid](https://mermaid.js.org/)
-> and render automatically as flowcharts on GitHub — no extra setup needed.
-
 Rather than one long file, the documentation is split into focused
 documents. Read them in order for a full picture, or jump straight to the
 one you need.
 
 ## How this documentation is organized
 
-| # | Document | What it covers |
-|---|----------|-----------------|
-| 1 | [01-overview.md](./01-overview.md) | What Conduit is, who it's for, tech stack, feature summary |
-| 2 | [02-architecture.md](./02-architecture.md) | System architecture, apps, request flow, how the pieces fit together |
-| 3 | [03-data-model.md](./03-data-model.md) | Every database model, its fields, and relationships between them |
-| 4 | [04-authentication-and-authorization.md](./04-authentication-and-authorization.md) | JWT, API keys, rate limiting, permissions, internal shared-secret endpoints |
-| 5 | [05-api-accounts.md](./05-api-accounts.md) | `/api/v1/auth/` — signup, login, API keys, usage |
-| 6 | [06-api-telemetry.md](./06-api-telemetry.md) | `/api/v1/stations/` and `/weather/` — stations, current weather, timeline, summaries, history |
-| 7 | [07-api-ingestion.md](./07-api-ingestion.md) | `/api/v1/ingest/`, sync logs, internal sync — pulling data from 3D-FEWSNET |
-| 8 | [08-api-alerts.md](./08-api-alerts.md) | `/api/v1/alerts/` and webhook subscriptions |
-| 9 | [09-api-blog.md](./09-api-blog.md) | `/api/v1/blog/` — public editorial content |
-| 10 | [10-ingestion-pipeline.md](./10-ingestion-pipeline.md) | How raw 3D-FEWSNET readings become `WeatherMeasurement` rows, step by step |
-| 11 | [11-alerts-engine.md](./11-alerts-engine.md) | The hydrology and livestock rule engines, scoring, and alert lifecycle |
-| 12 | [12-webhooks.md](./12-webhooks.md) | Webhook delivery, signing, retries, and payload shape |
-| 13 | [13-configuration.md](./13-configuration.md) | Every environment variable and Django setting that controls behavior |
-| 14 | [14-deployment.md](./14-deployment.md) | Docker, entrypoint, the GitHub Actions sync cron, and running locally |
-| 15 | [15-glossary.md](./15-glossary.md) | Terms, abbreviations, and domain vocabulary used throughout |
+| #   | Document                                                                           | What it covers                                                                                |
+| --- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | [01-overview.md](./01-overview.md)                                                 | What Conduit is, who it's for, tech stack, feature summary                                    |
+| 2   | [02-architecture.md](./02-architecture.md)                                         | System architecture, apps, request flow, how the pieces fit together                          |
+| 3   | [03-data-model.md](./03-data-model.md)                                             | Every database model, its fields, and relationships between them                              |
+| 4   | [04-authentication-and-authorization.md](./04-authentication-and-authorization.md) | JWT, API keys, rate limiting, permissions, internal shared-secret endpoints                   |
+| 5   | [05-api-accounts.md](./05-api-accounts.md)                                         | `/api/v1/auth/` — signup, login, API keys, usage                                              |
+| 6   | [06-api-telemetry.md](./06-api-telemetry.md)                                       | `/api/v1/stations/` and `/weather/` — stations, current weather, timeline, summaries, history |
+| 7   | [07-api-ingestion.md](./07-api-ingestion.md)                                       | `/api/v1/ingest/`, sync logs, internal sync — pulling data from 3D-FEWSNET                    |
+| 8   | [08-api-alerts.md](./08-api-alerts.md)                                             | `/api/v1/alerts/` and webhook subscriptions                                                   |
+| 9   | [09-api-blog.md](./09-api-blog.md)                                                 | `/api/v1/blog/` — public editorial content                                                    |
+| 10  | [10-ingestion-pipeline.md](./10-ingestion-pipeline.md)                             | How raw 3D-FEWSNET readings become `WeatherMeasurement` rows, step by step                    |
+| 11  | [11-alerts-engine.md](./11-alerts-engine.md)                                       | The hydrology and livestock rule engines, scoring, and alert lifecycle                        |
+| 12  | [12-webhooks.md](./12-webhooks.md)                                                 | Webhook delivery, signing, retries, and payload shape                                         |
+| 13  | [13-configuration.md](./13-configuration.md)                                       | Every environment variable and Django setting that controls behavior                          |
+| 14  | [14-deployment.md](./14-deployment.md)                                             | Docker, entrypoint, the GitHub Actions sync cron, and running locally                         |
+| 15  | [15-glossary.md](./15-glossary.md)                                                 | Terms, abbreviations, and domain vocabulary used throughout                                   |
 
 ## Quick orientation
 
