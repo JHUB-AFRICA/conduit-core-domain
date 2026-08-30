@@ -1,0 +1,30 @@
+name: Sync latest weather data
+
+on:
+  schedule:
+    # GitHub Actions cron is UTC and best-effort — under load it can slip
+    # a few minutes past the mark, but it will not fire more often than this.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call internal sync endpoint
+        run: |
+          http_status=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST "${SYNC_URL}" \
+            -H "X-SYNC-TOKEN: ${SYNC_SECRET_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          echo "HTTP status: ${http_status}"
+          cat response.json
+
+          if [ "${http_status}" -ge 300 ]; then
+            echo "Sync request failed"
+            exit 1
+          fi
+        env:
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+          SYNC_SECRET_TOKEN: ${{ secrets.SYNC_SECRET_TOKEN }}

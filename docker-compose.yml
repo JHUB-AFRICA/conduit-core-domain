@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: conduit-api
+
+    env_file:
+      - ./backend/config/.env
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./backend:/app
+
+    restart: unless-stopped
+
+    stdin_open: true
+    tty: true
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+
+    container_name: conduit-web
+
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - api
+
+    restart: unless-stopped

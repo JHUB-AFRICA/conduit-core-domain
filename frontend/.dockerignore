@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+.github
+
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+
+# Env files (pass secrets via --build-arg / env_file instead)
+.env
+.env*.local
+
+# Misc
+.DS_Store
+npm-debug.log*
+README.md
