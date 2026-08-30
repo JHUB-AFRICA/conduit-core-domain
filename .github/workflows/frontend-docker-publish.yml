@@ -1,4 +1,4 @@
-name: Build and Push Backend Docker Image
+name: Build and Push Frontend Docker Image
 
 on:
   push:
@@ -7,21 +7,23 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "backend/**"
-      - ".github/workflows/backend-docker-publish.yml"
+      - "frontend/**"
+      - ".github/workflows/frontend-docker-publish.yml"
   pull_request:
     branches:
       - main
     paths:
-      - "backend/**"
-      - ".github/workflows/backend-docker-publish.yml"
+      - "frontend/**"
+      - ".github/workflows/frontend-docker-publish.yml"
   workflow_dispatch: {} # allows manual runs from the Actions tab
 
 permissions:
   contents: read
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/conduit
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/conduit-frontend
+
+  NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
 
 jobs:
   build:
@@ -37,9 +39,11 @@ jobs:
       - name: Build image (no push)
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: false
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -75,9 +79,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
